@@ -1,24 +1,41 @@
-import math
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 
-def ler_float(mensagem):
+CENTAVO = Decimal("0.01")
+ZERO = Decimal("0.00")
+
+
+def arredondar_moeda(valor):
+    return valor.quantize(CENTAVO, rounding=ROUND_HALF_UP)
+
+
+def ler_decimal(mensagem, monetario=False):
     while True:
         try:
-            valor = float(input(mensagem).strip().replace(",", "."))
-            if not math.isfinite(valor) or valor <= 0:
+            valor = Decimal(input(mensagem).strip().replace(",", "."))
+            if not valor.is_finite() or valor <= 0:
                 print("⚠️ Digite um número válido maior que zero.")
                 continue
+            if monetario:
+                valor = arredondar_moeda(valor)
+                if valor <= ZERO:
+                    print("⚠️ Digite um número válido maior que zero.")
+                    continue
             return valor
-        except ValueError:
+        except InvalidOperation:
             print("⚠️ Digite apenas números válidos!")
 
 
 def formatar_moeda(valor):
-    return f"{valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    return f"{arredondar_moeda(valor):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+def calcular_subtotal(item):
+    return arredondar_moeda(item["Valor Unitário"] * item["Quantidade"])
 
 
 def calcular_total(carrinho):
-    return sum(item["Valor Unitário"] * item["Quantidade"] for item in carrinho)
+    return sum((calcular_subtotal(item) for item in carrinho), ZERO)
 
 
 def mostrar_carrinho(carrinho, orcamento):
@@ -27,7 +44,7 @@ def mostrar_carrinho(carrinho, orcamento):
     print("-" * 55)
 
     for item in carrinho:
-        subtotal = item["Valor Unitário"] * item["Quantidade"]
+        subtotal = calcular_subtotal(item)
         quantidade = f'{item["Quantidade"]:g}'.replace(".", ",")
         print(
             f'{item["Produto"]:20} '
@@ -40,7 +57,7 @@ def mostrar_carrinho(carrinho, orcamento):
         print("🛒 Seu carrinho está vazio.")
 
     total = calcular_total(carrinho)
-    saldo = orcamento - total
+    saldo = arredondar_moeda(orcamento - total)
     print("-" * 55)
     print(f"Orçamento: R$ {formatar_moeda(orcamento)}")
     print(f"Gastou:    R$ {formatar_moeda(total)}")
@@ -82,7 +99,7 @@ def main():
     print('Digite "Remover" para escolher um produto.')
     print("Bora lá?")
 
-    orcamento = ler_float("Quanto de grana você tem? 💵 R$ ")
+    orcamento = ler_decimal("Quanto de grana você tem? 💵 R$ ", monetario=True)
     carrinho = []
 
     while True:
@@ -115,8 +132,8 @@ def main():
             print("⚠️ Digite o nome de um produto.")
             continue
 
-        valor = ler_float("Quanto custa? R$ ")
-        quantidade = ler_float("Quantos vai levar?: ")
+        valor = ler_decimal("Quanto custa? R$ ", monetario=True)
+        quantidade = ler_decimal("Quantos vai levar?: ")
         produto = {
             "Produto": nome_produto.capitalize(),
             "Valor Unitário": valor,

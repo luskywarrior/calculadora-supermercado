@@ -40,6 +40,12 @@ Gastou:    R$ 22,95
 Saldo:     R$ 77,05
 ```
 
+## Precisão dos cálculos
+
+Preços, quantidades, orçamento, totais e saldo usam `decimal.Decimal`, criado diretamente do texto digitado, sem conversão para `float`. Quantidades fracionadas mantêm suas casas decimais.
+
+Preços e orçamento são arredondados para centavos na entrada. Cada subtotal (preço × quantidade) é arredondado para centavos antes da soma, usando `ROUND_HALF_UP`: meio centavo arredonda para cima. Por exemplo, R$ 2,01 × 0,5 resulta em R$ 1,01. O total soma os subtotais exibidos e o saldo é o orçamento menos esse total. Valores monetários que arredondam para zero não são aceitos na entrada.
+
 ## Testes
 
 ```bash
@@ -52,7 +58,6 @@ Python, listas, dicionários, funções, laços, tratamento de exceções e form
 
 ## Próximas melhorias
 
-- Cálculos monetários com `decimal.Decimal`
 - Unidade de medida (kg, un, L)
 - Interface gráfica e versão Android
 
